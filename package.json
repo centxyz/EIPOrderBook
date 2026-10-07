@@ -1,14 +1,12 @@
 {
   "name": "nftmarket",
   "version": "1.0.0",
-  "description": "NFTMarket JavaScript starter processor with retry scaffolding",
-  "main": "src/index.js",
+  "description": "Non-custodial EIP-712 NFT listing order book",
+  "main": "src/nftmarket.js",
+  "bin": { "nftmarket": "src/index.js" },
   "scripts": {
     "start": "node src/index.js",
-    "dev": "nodemon src/index.js",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test": "node --test tests/*.test.js"
   },
   "keywords": [
     "javascript",
@@ -18,10 +16,7 @@
   "author": "cent",
   "license": "MIT",
   "dependencies": {
+    "ethers": "^6.15.0",
     "minimist": "^1.2.8"
-  },
-  "devDependencies": {
-    "jest": "^29.7.0",
-    "nodemon": "^3.0.1"
   }
 }

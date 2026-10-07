@@ -1,31 +1,8 @@
-// tests/nftmarket.test.js
-/**
- * Tests for NFTMarket module
- */
-
-const { NFTMarket } = require('../src/nftmarket');
-
-describe('NFTMarket', () => {
-    let instance;
-
-    beforeEach(() => {
-        instance = new NFTMarket({ verbose: false });
-    });
-
-    test('should create instance with default config', () => {
-        expect(instance).toBeDefined();
-        expect(instance.timeout).toBe(30000);
-        expect(instance.maxRetries).toBe(3);
-    });
-
-    test('should execute successfully', async () => {
-        const result = await instance.execute();
-        expect(result.success).toBe(true);
-        expect(result.message).toBeTruthy();
-    });
-
-    test('should process data', async () => {
-        const result = await instance.process();
-        expect(result.processed).toBe(true);
-    });
-});
+const test = require('node:test'); const assert = require('node:assert/strict'); const { mkdtemp } = require('node:fs/promises'); const { tmpdir } = require('node:os'); const { join } = require('node:path'); const { Wallet } = require('ethers');
+const { NFTMarket, ZERO_ADDRESS, orderHash } = require('../src/nftmarket');
+const nft = '0x0000000000000000000000000000000000001000'; const verifyingContract = '0x0000000000000000000000000000000000002000';
+async function fixture() { const dir = await mkdtemp(join(tmpdir(), 'nftmarket-')); const wallet = Wallet.createRandom(); const market = new NFTMarket({ file: join(dir, 'orders.json'), now: () => 2_000_000_000 }); await market.load(); const order = market.draft({ chainId: 1, verifyingContract, nftContract: nft, tokenId: '42', seller: wallet.address, paymentToken: ZERO_ADDRESS, price: '1000000000000000000', expiry: '2000001000', nonce: '7' }); const signature = await wallet.signTypedData(order.domain, order.types, order.message); return { market, wallet, order, signature, file: join(dir, 'orders.json') }; }
+test('creates and authenticates EIP-712 listings', async () => { const { market, order, signature } = await fixture(); const record = await market.add(order, signature); assert.equal(record.hash, orderHash(order)); assert.equal(market.verify(record), true); assert.equal(market.list()[0].order.message.tokenId, '42'); });
+test('rejects tampered, wrong-seller, expired, and duplicate listings', async () => { const { market, order, signature } = await fixture(); await assert.rejects(market.add({ ...order, message: { ...order.message, price: '2' } }, signature), error => error.code === 'INVALID_SIGNATURE'); const expired = { ...order, message: { ...order.message, expiry: '1999999999' } }; const expiredSig = await (await fixture()).wallet.signTypedData(expired.domain, expired.types, expired.message); await assert.rejects(market.add(expired, expiredSig), error => error.code === 'EXPIRED'); await market.add(order, signature); await assert.rejects(market.add(order, signature), error => error.code === 'DUPLICATE'); });
+test('persists, filters, verifies, and removes listings', async () => { const { market, order, signature, file, wallet } = await fixture(); const record = await market.add(order, signature); const loaded = new NFTMarket({ file, now: () => 2_000_000_000 }); await loaded.load(); assert.equal(loaded.list({ chainId: 1, seller: wallet.address }).length, 1); assert.equal(loaded.list({ chainId: 137 }).length, 0); assert.equal(loaded.verify(loaded.list()[0]), true); await loaded.remove(record.hash); assert.equal(loaded.list().length, 0); });
+test('validates addresses, prices, and unsigned integer fields', async () => { const { market, wallet } = await fixture(); assert.throws(() => market.draft({ chainId: 1, verifyingContract, nftContract: 'bad', tokenId: 1, seller: wallet.address, price: 1, expiry: 3, nonce: 1 }), /nftContract/); assert.throws(() => market.draft({ chainId: 1, verifyingContract, nftContract: nft, tokenId: 1, seller: wallet.address, price: 0, expiry: 3, nonce: 1 }), /greater than zero/); });
