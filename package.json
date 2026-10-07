@@ -1,7 +1,7 @@
 {
   "name": "nftmarket",
   "version": "1.0.0",
-  "description": "NFTMarket - A powerful JavaScript application",
+  "description": "NFTMarket JavaScript starter processor with retry scaffolding",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
