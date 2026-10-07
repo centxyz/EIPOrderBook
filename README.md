@@ -51,3 +51,9 @@ npm test
 ## License
 
 MIT © cent
+
+## Current limitations
+
+- The local order book does not escrow assets or settle trades.
+- A production settlement contract must enforce ownership, approvals, payment, nonces, replay protection, and cancellation on-chain.
+- Signatures and listings are only as trustworthy as the configured domain and market address.
