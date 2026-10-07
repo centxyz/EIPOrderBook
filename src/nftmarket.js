@@ -20,12 +20,12 @@ function normalizeListing(input = {}) {
 function typedData(chainId, verifyingContract, listing) {
   if (!Number.isSafeInteger(Number(chainId)) || Number(chainId) <= 0) throw new MarketError('chainId must be a positive safe integer', 'INPUT');
   if (!isAddress(verifyingContract || '')) throw new MarketError('verifyingContract must be a valid EVM address', 'INPUT');
-  const message = normalizeListing(listing); return { domain: { name: 'NFTMarket', version: '1', chainId: Number(chainId), verifyingContract: getAddress(verifyingContract) }, types: TYPES, primaryType: 'Listing', message };
+  const message = normalizeListing(listing); return { domain: { name: 'SigMintMarket', version: '1', chainId: Number(chainId), verifyingContract: getAddress(verifyingContract) }, types: TYPES, primaryType: 'Listing', message };
 }
 function orderHash(order) { return TypedDataEncoder.hash(order.domain, order.types, order.message); }
 
-class NFTMarket {
-  constructor({ file = '.nftmarket/orders.json', now = () => Math.floor(Date.now() / 1000) } = {}) { this.file = file; this.now = now; this.data = { schema: 1, orders: [] }; }
+class SigMintMarket {
+  constructor({ file = '.sigmintmarket/orders.json', now = () => Math.floor(Date.now() / 1000) } = {}) { this.file = file; this.now = now; this.data = { schema: 1, orders: [] }; }
   async load() { try { const data = JSON.parse(await readFile(this.file, 'utf8')); if (data.schema !== 1 || !Array.isArray(data.orders)) throw new Error('unsupported schema'); this.data = data; } catch (error) { if (error.code !== 'ENOENT') throw new MarketError(`Unable to load order book: ${error.message}`, 'DATA'); } }
   draft(input) { const { chainId, verifyingContract, ...listing } = input; return typedData(chainId, verifyingContract, listing); }
   async add(order, signature) {
@@ -44,4 +44,5 @@ class NFTMarket {
   verify(record) { try { const canonical = typedData(record.order.domain.chainId, record.order.domain.verifyingContract, record.order.message); return orderHash(canonical) === record.hash && verifyTypedData(canonical.domain, canonical.types, canonical.message, record.signature).toLowerCase() === canonical.message.seller.toLowerCase(); } catch { return false; } }
   async persist() { await mkdir(dirname(this.file), { recursive: true }); const temporary = `${this.file}.${process.pid}.${randomBytes(5).toString('hex')}.tmp`; await writeFile(temporary, `${JSON.stringify(this.data, null, 2)}\n`, { mode: 0o600 }); await rename(temporary, this.file); }
 }
-module.exports = { NFTMarket, MarketError, TYPES, ZERO_ADDRESS, normalizeListing, typedData, orderHash };
+const NFTMarket = SigMintMarket;
+module.exports = { SigMintMarket, NFTMarket, MarketError, TYPES, ZERO_ADDRESS, normalizeListing, typedData, orderHash };
