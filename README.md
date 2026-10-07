@@ -1,5 +1,7 @@
 # EIPOrderBook
 
+[![CI](https://github.com/centxyz/EIPOrderBook/actions/workflows/ci.yml/badge.svg)](https://github.com/centxyz/EIPOrderBook/actions/workflows/ci.yml)
+
 EIPOrderBook is a local, non-custodial EIP-712 listing order book for NFTs. It creates typed listing payloads for a wallet to sign, authenticates seller signatures, rejects expired or modified listings, and persists a searchable order book with deterministic order hashes.
 
 It does not hold private keys, escrow NFTs, approve tokens, or settle trades. A production settlement contract can consume the same signed listing fields after performing ownership, approval, nonce, payment, and replay checks on-chain.
