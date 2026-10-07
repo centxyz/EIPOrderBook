@@ -1,9 +1,9 @@
 {
-  "name": "sigmintmarket",
+  "name": "eiporderbook",
   "version": "1.0.0",
   "description": "Non-custodial EIP-712 NFT listing order book",
   "main": "src/nftmarket.js",
-  "bin": { "sigmintmarket": "src/index.js" },
+  "bin": { "eiporderbook": "src/index.js" },
   "scripts": {
     "start": "node src/index.js",
     "test": "node --test tests/*.test.js"
@@ -11,7 +11,7 @@
   "keywords": [
     "javascript",
     "nodejs",
-    "sigmintmarket"
+    "eiporderbook"
   ],
   "author": "cent",
   "license": "MIT",
